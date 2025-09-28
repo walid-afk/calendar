@@ -134,8 +134,8 @@ export function CategoryFilter({ onFilterChange, initialFilters = {}, showFilter
           
           {hasActiveFilters && (
             <div>
-              <Badge status="info">
-                {[selectedCategory, selectedSubcategory, selectedArea].filter(Boolean).length} filtre(s) actif(s)
+              <Badge tone="info">
+                {`${[selectedCategory, selectedSubcategory, selectedArea].filter(Boolean).length} filtre(s) actif(s)`}
               </Badge>
             </div>
           )}
