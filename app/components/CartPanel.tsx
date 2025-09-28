@@ -23,9 +23,9 @@ export function CartPanel({ items, onRemoveItem, onClearCart }: CartPanelProps) 
     return (
       <Card>
         <div style={{ padding: '16px', textAlign: 'center' }}>
-          <Text as=" p\>Panier vide</Text>
+          <Text as="p">Panier vide</Text>
           <div style={{ marginTop: '8px' }}>
-            <Text variant="bodySm" color="subdued">
+            <Text as="p" variant="bodySm">
               Ajoutez des prestations pour commencer
             </Text>
           </div>
@@ -38,7 +38,7 @@ export function CartPanel({ items, onRemoveItem, onClearCart }: CartPanelProps) 
     <Card>
       <div style={{ padding: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text variant="headingMd">Panier</Text>
+          <Text as="h3" variant="headingMd">Panier</Text>
           <Button size="slim" onClick={onClearCart}>
             Vider
           </Button>
@@ -55,7 +55,7 @@ export function CartPanel({ items, onRemoveItem, onClearCart }: CartPanelProps) 
                   width: '100%'
                 }}>
                   <div>
-                    <Text variant="bodyMd" fontWeight="medium">
+                    <Text as="p" variant="bodyMd" fontWeight="medium">
                       {item.title}
                     </Text>
                     <div style={{ marginTop: '4px', display: 'flex', gap: '8px' }}>
@@ -80,11 +80,11 @@ export function CartPanel({ items, onRemoveItem, onClearCart }: CartPanelProps) 
         
         <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Text variant="bodyMd" fontWeight="medium">Durée totale :</Text>
+            <Text as="p" variant="bodyMd" fontWeight="medium">Durée totale :</Text>
             <Badge status="success">{totalMinutes} minutes</Badge>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Text variant="bodyMd" fontWeight="medium">Prix total :</Text>
+            <Text as="p" variant="bodyMd" fontWeight="medium">Prix total :</Text>
             <Badge status="info">{totalPrice.toFixed(2)}€</Badge>
           </div>
         </div>
