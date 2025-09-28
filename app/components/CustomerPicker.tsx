@@ -196,17 +196,17 @@ export function CustomerPicker({
                         <Text as="p" variant="bodyMd" fontWeight="semibold">
                           {customer.first_name} {customer.last_name}
                         </Text>
-                        <Text as="p" variant="bodySm" color="subdued">
+                        <Text as="p" variant="bodySm">
                           {customer.email}
                         </Text>
                         {customer.phone && (
-                          <Text as="p" variant="bodySm" color="subdued">
+                          <Text as="p" variant="bodySm">
                             📞 {customer.phone}
                           </Text>
                         )}
                       </div>
                       <div style={{ marginLeft: '12px', textAlign: 'right' }}>
-                        <Text variant="bodySm" color="subdued">
+                        <Text as="p" variant="bodySm">
                           ID: {customer.id}
                         </Text>
                       </div>
