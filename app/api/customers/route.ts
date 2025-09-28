@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
     };
     
     // Rechercher un client existant
-    const existingCustomer = await findExistingCustomer(normalizedData.email, normalizedData.phone);
+    const existingCustomer = await findExistingCustomer(normalizedData.email, normalizedData.phone || undefined);
     
     let customer;
     
