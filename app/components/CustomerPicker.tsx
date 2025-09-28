@@ -251,23 +251,27 @@ export function CustomerPicker({
               value={createForm.email}
               onChange={(value) => setCreateForm(prev => ({ ...prev, email: value }))}
               type="email"
+              autoComplete="email"
             />
             <TextField
               label="Prénom"
               value={createForm.first_name}
               onChange={(value) => setCreateForm(prev => ({ ...prev, first_name: value }))}
               required
+              autoComplete="given-name"
             />
             <TextField
               label="Nom"
               value={createForm.last_name}
               onChange={(value) => setCreateForm(prev => ({ ...prev, last_name: value }))}
               required
+              autoComplete="family-name"
             />
             <TextField
               label="Téléphone"
               value={createForm.phone}
               onChange={(value) => setCreateForm(prev => ({ ...prev, phone: value }))}
+              autoComplete="tel"
             />
           </div>
         </Modal.Section>
