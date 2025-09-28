@@ -147,11 +147,12 @@ export function CustomerPicker({
               onChange={setSearchQuery}
               placeholder="Email, nom ou téléphone..."
               helpText={isSearching ? 'Recherche en cours...' : undefined}
+              autoComplete="off"
             />
             
             {error && (
               <div style={{ marginTop: '8px' }}>
-                <Banner status="critical">{error}</Banner>
+                <Banner tone="critical">{error}</Banner>
               </div>
             )}
             
