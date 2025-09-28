@@ -23,7 +23,7 @@ export function CartPanel({ items, onRemoveItem, onClearCart }: CartPanelProps) 
     return (
       <Card>
         <div style={{ padding: '16px', textAlign: 'center' }}>
-          <Text>Panier vide</Text>
+          <Text as=" p\>Panier vide</Text>
           <div style={{ marginTop: '8px' }}>
             <Text variant="bodySm" color="subdued">
               Ajoutez des prestations pour commencer
