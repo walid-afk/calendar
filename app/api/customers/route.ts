@@ -42,8 +42,8 @@ async function findExistingCustomer(email?: string, phone?: string) {
     
     const response = await shopifyFetchWithThrottle(`/customers/search.json?query=${encodeURIComponent(query)}`);
     
-    if (response.customers && response.customers.length > 0) {
-      return response.customers[0];
+    if (response.data.customers && response.data.customers.length > 0) {
+      return response.data.customers[0];
     }
     
     return null;
@@ -58,8 +58,8 @@ async function createCustomer(customerData: any) {
   try {
     const response = await shopifyFetchWithThrottle('/customers.json', 'POST', { customer: customerData });
     
-    console.log('customer.create.ok', response.customer?.id);
-    return response.customer;
+    console.log('customer.create.ok', response.data.customer?.id);
+    return response.data.customer;
   } catch (error) {
     console.error('Erreur création client:', error);
     throw error;
@@ -72,7 +72,7 @@ async function updateCustomer(customerId: string, customerData: any) {
     const response = await shopifyFetchWithThrottle(`/customers/${customerId}.json`, 'PUT', { customer: customerData });
     
     console.log('customer.update.ok', customerId);
-    return response.customer;
+    return response.data.customer;
   } catch (error) {
     console.error('Erreur mise à jour client:', error);
     throw error;
