@@ -118,7 +118,7 @@ export function CustomerPicker({
   return (
     <Card>
       <div style={{ padding: '16px' }}>
-        <Text variant="headingMd">Client</Text>
+        <Text as="h3" variant="headingMd">Client</Text>
         
         {selectedCustomer ? (
           <div style={{ marginTop: '16px' }}>
