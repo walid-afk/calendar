@@ -122,14 +122,14 @@ export function CustomerPicker({
         
         {selectedCustomer ? (
           <div style={{ marginTop: '16px' }}>
-            <Banner status="success">
+            <Banner tone="success">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <Text variant="bodyMd" fontWeight="medium">
+                <Text as="p" variant="bodyMd" fontWeight="medium">
                   {selectedCustomer.first_name} {selectedCustomer.last_name}
                 </Text>
-                <Text variant="bodySm">{selectedCustomer.email}</Text>
+                <Text as="p" variant="bodySm">{selectedCustomer.email}</Text>
                 {selectedCustomer.phone && (
-                  <Text variant="bodySm">{selectedCustomer.phone}</Text>
+                  <Text as="p" variant="bodySm">{selectedCustomer.phone}</Text>
                 )}
               </div>
             </Banner>
