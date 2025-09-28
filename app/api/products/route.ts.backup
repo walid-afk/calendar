@@ -1,0 +1,37 @@
+import { NextRequest } from 'next/server'
+import { withAuth } from '@/lib/auth'
+import { getPrestationsProducts } from '@/lib/shopify'
+
+async function handler(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const collectionId = searchParams.get('collectionId')
+    const subcategory = searchParams.get('subcategory')
+    const area = searchParams.get('area')
+    
+    if (!collectionId) {
+      return Response.json(
+        { error: 'Collection ID requis' },
+        { status: 400 }
+      )
+    }
+    
+    const { getProductsByCategory } = await import('@/lib/categories')
+    const filters = {
+      collectionId,
+      subcategory: subcategory || undefined,
+      area: area || undefined
+    }
+    
+    const products = await getProductsByCategory(collectionId, filters)
+    return Response.json({ items: products })
+  } catch (error) {
+    console.error('Erreur Shopify:', error)
+    return Response.json(
+      { error: error instanceof Error ? error.message : 'Erreur lors de la récupération des produits' },
+      { status: 500 }
+    )
+  }
+}
+
+export const GET = withAuth(handler)

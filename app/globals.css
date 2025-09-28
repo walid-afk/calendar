@@ -1,0 +1,142 @@
+@import '@shopify/polaris/build/esm/styles.css';
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* Custom styles for the booking interface */
+.booking-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.booking-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.booking-full-width {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .booking-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .booking-container {
+    padding: 10px;
+  }
+}
+
+/* Slot grid styles */
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+  gap: 4px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.slot-cell {
+  width: 44px;
+  height: 28px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.slot-cell.busy {
+  background-color: #e1e3e5;
+  color: #8c9196;
+  cursor: not-allowed;
+}
+
+.slot-cell.available {
+  background-color: #ffffff;
+  border: 1px solid #008060;
+  color: #202223;
+}
+
+.slot-cell.selected {
+  background-color: #008060;
+  color: #ffffff;
+}
+
+.slot-cell.hovered {
+  background-color: #f0fdf4;
+  border: 1px solid #008060;
+}
+
+/* Passcode gate styles */
+.passcode-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.passcode-form {
+  max-width: 400px;
+  width: 100%;
+}
+
+/* Loading states */
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Error states */
+.error-banner {
+  margin: 16px 0;
+}
+
+/* Success states */
+.success-banner {
+  margin: 16px 0;
+}
