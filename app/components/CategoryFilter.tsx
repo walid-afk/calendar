@@ -111,7 +111,7 @@ export function CategoryFilter({ onFilterChange, initialFilters = {}, showFilter
     return (
       <Card>
         <div style={{ padding: '16px', textAlign: 'center' }}>
-          <Text>Chargement des catégories...</Text>
+          <Text as="p">Chargement des catégories...</Text>
         </div>
       </Card>
     )
