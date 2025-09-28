@@ -170,7 +170,7 @@ export function CustomerPicker({
                   borderBottom: '1px solid var(--p-color-border)', 
                   backgroundColor: 'var(--p-color-bg-surface-subdued)'
                 }}>
-                  <Text variant="bodySm" color="subdued">
+                  <Text as="p" variant="bodySm">
                     {searchResults.length} client{searchResults.length > 1 ? 's' : ''} trouvé{searchResults.length > 1 ? 's' : ''}
                   </Text>
                 </div>
