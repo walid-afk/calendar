@@ -59,7 +59,7 @@ export function CartPanel({ items, onRemoveItem, onClearCart }: CartPanelProps) 
                       {item.title}
                     </Text>
                     <div style={{ marginTop: '4px', display: 'flex', gap: '8px' }}>
-                      <Badge>{item.durationMinutes} min</Badge>
+                      <Badge>{item.durationMinutes.toString()} min</Badge>
                       <Badge status="info">{item.price}€</Badge>
                     </div>
                   </div>
@@ -81,7 +81,7 @@ export function CartPanel({ items, onRemoveItem, onClearCart }: CartPanelProps) 
         <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <Text as="p" variant="bodyMd" fontWeight="medium">Durée totale :</Text>
-            <Badge status="success">{totalMinutes} minutes</Badge>
+            <Badge status="success">{totalMinutes.toString()} minutes</Badge>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <Text as="p" variant="bodyMd" fontWeight="medium">Prix total :</Text>
