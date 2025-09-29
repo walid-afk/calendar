@@ -96,8 +96,8 @@ export function ServicesList({ services, onAddService, loading = false, error = 
                     
                     {/* Durée et prix */}
                     <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
-                      <Badge>{service.durationMinutes || 0} min</Badge>
-                      <Badge>{(service.priceFrom || 0).toFixed(2)}€</Badge>
+                      <Badge>{`${service.durationMinutes || 0} min`}</Badge>
+                      <Badge>{`${(service.priceFrom || 0).toFixed(2)}€`}</Badge>
                     </div>
                   </div>
                   <Button 

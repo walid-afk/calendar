@@ -740,15 +740,16 @@ export default function EmployeePage() {
               onChange={setPasscode}
               type="password"
               placeholder="Entrez votre code d'accès"
+              autoComplete="current-password"
             />
             {authError && (
               <div style={{ marginTop: '8px' }}>
-                <Banner status="critical">{authError}</Banner>
+                <Banner tone="critical">{authError}</Banner>
               </div>
             )}
             <div style={{ marginTop: '16px' }}>
-              <Button 
-                primary 
+              <Button
+                variant="primary"
                 onClick={() => handleAuth(passcode)}
                 disabled={!passcode.trim()}
               >
@@ -813,7 +814,7 @@ export default function EmployeePage() {
                   </p>
                   <Button 
                     onClick={startGoogleLogin} 
-                    primary
+                    variant="primary"
                     size="large"
                     disabled={gStatus === 'connecting'}
                   >
@@ -911,7 +912,7 @@ export default function EmployeePage() {
                 <Card>
                   <div style={{ padding: '16px', textAlign: 'center' }}>
                     <Button
-                      primary
+                      variant="primary"
                       size="large"
                       onClick={handleBooking}
                       disabled={!canBook}

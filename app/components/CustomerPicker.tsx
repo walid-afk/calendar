@@ -257,14 +257,12 @@ export function CustomerPicker({
               label="Prénom"
               value={createForm.first_name}
               onChange={(value) => setCreateForm(prev => ({ ...prev, first_name: value }))}
-              required
               autoComplete="given-name"
             />
             <TextField
               label="Nom"
               value={createForm.last_name}
               onChange={(value) => setCreateForm(prev => ({ ...prev, last_name: value }))}
-              required
               autoComplete="family-name"
             />
             <TextField

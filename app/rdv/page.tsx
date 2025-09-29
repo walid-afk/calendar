@@ -13,7 +13,7 @@ import type { Employee, SlotOption } from '@/types';
 export default function RDVPage() {
   const [passcode, setPasscode] = React.useState<string>('');
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(false);
-  const headers = React.useMemo(() => passcode ? { 'x-passcode': passcode } : {}, [passcode]);
+  const headers = React.useMemo(() => passcode ? { 'x-passcode': passcode } : undefined, [passcode]);
 
   const [employees, setEmployees] = React.useState<Employee[]>([]);
   const [staff, setStaff] = React.useState<string>('any');
@@ -41,7 +41,7 @@ export default function RDVPage() {
     
     (async () => {
       try {
-        const r = await fetch('/api/employees', { headers, cache: 'no-store' });
+        const r = await fetch('/api/employees', { headers: headers || {}, cache: 'no-store' });
         if (!r.ok) return;
         const j = await r.json();
         const items = (j.items || []).map((it: any) => ({
@@ -61,7 +61,7 @@ export default function RDVPage() {
   const getSlotsForDay = React.useCallback(async (ymd: string) => {
     if (employees.length === 0 || totalMinutes <= 0) return [];
     try {
-      const slots = await getDaySlots(ymd, employees, totalMinutes, staff, headers);
+      const slots = await getDaySlots(ymd, employees, totalMinutes, staff, headers || {});
       return slots;
     } catch (error) {
       console.error('Erreur lors du chargement des créneaux:', error);
@@ -88,7 +88,8 @@ export default function RDVPage() {
   if (!isAuthenticated) {
     return (
       <Page title="Prise de RDV - Authentification">
-        <Card sectioned>
+        <Card>
+          <div style={{ padding: '16px' }}>
           <div style={{ maxWidth: '400px', margin: '0 auto' }}>
             <TextField
               label="Code d'accès"
@@ -96,12 +97,14 @@ export default function RDVPage() {
               onChange={setPasscode}
               type="password"
               placeholder="Entrez votre code d'accès"
+              autoComplete="current-password"
             />
             <div style={{ marginTop: '16px' }}>
-              <Button primary onClick={handleAuth} disabled={!passcode.trim()}>
+              <Button variant="primary" onClick={handleAuth} disabled={!passcode.trim()}>
                 Se connecter
               </Button>
             </div>
+          </div>
           </div>
         </Card>
       </Page>
@@ -110,20 +113,25 @@ export default function RDVPage() {
 
   return (
     <Page title="Prise de RDV">
-      {Object.keys(headers).length === 0 && (
-        <Banner status="warning">Entre ton passcode pour activer les appels API (x-passcode).</Banner>
+      {Object.keys(headers || {}).length === 0 && (
+        <Banner tone="warning">Entre ton passcode pour activer les appels API (x-passcode).</Banner>
       )}
       
       <Layout>
         <Layout.Section>
-          <Card title="Avec qui ?" sectioned>
-            <StaffPicker employees={employees} value={staff} onChange={setStaff} />
+          <Card>
+            <div style={{ padding: '16px' }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '16px' }}>Avec qui ?</h3>
+              <StaffPicker employees={employees} value={staff} onChange={setStaff} />
+            </div>
           </Card>
         </Layout.Section>
 
         <Layout.Section>
-          <Card title="Configuration" sectioned>
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <Card>
+            <div style={{ padding: '16px' }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '16px' }}>Configuration</h3>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
               <TextField
                 label="Durée (minutes)"
                 type="number"
@@ -131,6 +139,7 @@ export default function RDVPage() {
                 onChange={(value) => setTotalMinutes(parseInt(value) || 30)}
                 min={15}
                 step={15}
+                autoComplete="off"
               />
               <div>
                 <div style={{ fontSize: '14px', color: '#6b7280' }}>
@@ -140,6 +149,7 @@ export default function RDVPage() {
                   {employees.length} employé{employees.length > 1 ? 's' : ''} chargé{employees.length > 1 ? 's' : ''}
                 </div>
               </div>
+            </div>
             </div>
           </Card>
         </Layout.Section>

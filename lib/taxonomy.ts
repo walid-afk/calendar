@@ -131,16 +131,16 @@ export async function getProductWithTags(productId: number): Promise<ProductTaxo
     const tags = product.tags ? product.tags.split(', ') : []
     
     // Extraire les valeurs depuis les tags
-    const soin_category = tags.find(tag => tag.startsWith('catégorie:'))?.split(':')[1] || null
-    const subcategory = tags.find(tag => tag.startsWith('sous-cat:'))?.split(':')[1] || null
-    const areas = tags.filter(tag => tag.startsWith('zone:')).map(tag => tag.split(':')[1])
+    const soin_category = tags.find((tag: string) => tag.startsWith('catégorie:'))?.split(':')[1] || null
+    const subcategory = tags.find((tag: string) => tag.startsWith('sous-cat:'))?.split(':')[1] || null
+    const areas = tags.filter((tag: string) => tag.startsWith('zone:')).map((tag: string) => tag.split(':')[1])
     
     // Durée depuis les tags
-    const durationTag = tags.find(tag => tag.startsWith('durée:'))
+    const durationTag = tags.find((tag: string) => tag.startsWith('durée:'))
     const duration_minutes = durationTag ? parseInt(durationTag.split(':')[1]) : null
     
     // Prix depuis les tags (optionnel)
-    const priceTag = tags.find(tag => tag.startsWith('prix:'))
+    const priceTag = tags.find((tag: string) => tag.startsWith('prix:'))
     const price_from = priceTag ? parseFloat(priceTag.split(':')[1]) : null
     
     return {

@@ -1,6 +1,6 @@
 'use client'
 
-import { TopBar as PolarisTopBar, Badge, Button, Select, TextField } from '@shopify/polaris'
+import { Badge, Button, Select, TextField } from '@shopify/polaris'
 import { useState } from 'react'
 
 interface Employee {
@@ -33,7 +33,7 @@ export function TopBar({
   }))
 
   const googleStatus = isGoogleConnected ? (
-    <Badge status="success">Google Connecté</Badge>
+    <Badge tone="success">Google Connecté</Badge>
   ) : (
     <Button onClick={onGoogleAuth} size="slim">
       Connecter Google
@@ -41,7 +41,7 @@ export function TopBar({
   )
 
   return (
-    <PolarisTopBar>
+    <div style={{ backgroundColor: '#f6f6f7', borderBottom: '1px solid #e1e3e5' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {googleStatus}
@@ -65,9 +65,10 @@ export function TopBar({
             type="date"
             value={selectedDate}
             onChange={onDateChange}
+            autoComplete="off"
           />
         </div>
       </div>
-    </PolarisTopBar>
+    </div>
   )
 }

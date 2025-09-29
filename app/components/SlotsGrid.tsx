@@ -112,7 +112,7 @@ export function SlotsGrid({
     return (
       <Card>
         <div style={{ padding: '16px', textAlign: 'center' }}>
-          <Text>Aucun créneau disponible</Text>
+          <Text as="p">Aucun créneau disponible</Text>
         </div>
       </Card>
     )
@@ -122,10 +122,10 @@ export function SlotsGrid({
     <Card>
       <div style={{ padding: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <Text variant="headingMd">Créneaux disponibles</Text>
+          <Text as="h3" variant="headingMd">Créneaux disponibles</Text>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <Badge status="info">{need} créneaux</Badge>
-            <Badge status="success">{validStarts?.length || 0} disponibles</Badge>
+            <Badge tone="info">{`${need} créneaux`}</Badge>
+            <Badge tone="success">{`${validStarts?.length || 0} disponibles`}</Badge>
           </div>
         </div>
         
@@ -153,15 +153,15 @@ export function SlotsGrid({
         <div style={{ marginTop: '16px', fontSize: '12px', color: '#6d7175', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <div style={{ width: '12px', height: '12px', backgroundColor: '#e1e3e5', borderRadius: '2px' }}></div>
-            <Text variant="bodySm">Occupé</Text>
+            <Text as="span" variant="bodySm">Occupé</Text>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <div style={{ width: '12px', height: '12px', backgroundColor: '#ffffff', border: '1px solid #008060', borderRadius: '2px' }}></div>
-            <Text variant="bodySm">Disponible</Text>
+            <Text as="span" variant="bodySm">Disponible</Text>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <div style={{ width: '12px', height: '12px', backgroundColor: '#008060', borderRadius: '2px' }}></div>
-            <Text variant="bodySm">Sélectionné</Text>
+            <Text as="span" variant="bodySm">Sélectionné</Text>
           </div>
         </div>
       </div>

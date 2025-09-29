@@ -107,7 +107,7 @@ export default function TaxonomyFilter({
     return (
       <div style={{ marginBottom: '16px' }}>
         <Button onClick={onToggleFilters}>
-          Filtres {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+          Filtres {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}
         </Button>
       </div>
     )
@@ -120,7 +120,7 @@ export default function TaxonomyFilter({
           <Text as="h3" variant="headingMd">Filtres</Text>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {activeFiltersCount > 0 && (
-              <Badge>{activeFiltersCount} filtre(s) actif(s)</Badge>
+              <Badge>{`${activeFiltersCount} filtre(s) actif(s)`}</Badge>
             )}
             <Button onClick={onToggleFilters} size="slim">
               Masquer
@@ -129,7 +129,7 @@ export default function TaxonomyFilter({
         </div>
 
         {loading ? (
-          <Text>Chargement des filtres...</Text>
+          <Text as="p">Chargement des filtres...</Text>
         ) : (
           <BlockStack gap="300">
             <Select
