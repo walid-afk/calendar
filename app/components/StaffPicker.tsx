@@ -15,20 +15,6 @@ export default function StaffPicker({ employees, value, onChange }: Props) {
   return (
     <Card>
       <div className={styles.wrap}>
-        <div
-          role="radio"
-          aria-checked={value === 'any'}
-          tabIndex={0}
-          className={`${styles.card} ${value === 'any' ? styles.selected : ''}`}
-          onClick={() => onChange('any')}
-          onKeyDown={(e) => e.key === 'Enter' && onChange('any')}
-        >
-          <div className={styles.initials}>?</div>
-          <div className={styles.info}>
-            <div className={styles.name}>Sans préférence</div>
-          </div>
-          <div className={styles.radio}>{value === 'any' ? '◉' : '○'}</div>
-        </div>
 
         {Array.isArray(employees) && employees.map((e) => (
           <div

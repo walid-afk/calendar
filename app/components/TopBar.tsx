@@ -2,6 +2,7 @@
 
 import { Badge, Button, Select, TextField } from '@shopify/polaris'
 import { useState } from 'react'
+import Link from 'next/link'
 
 interface Employee {
   id: string
@@ -47,27 +48,14 @@ export function TopBar({
           {googleStatus}
         </div>
         
-        <div style={{ minWidth: '200px' }}>
-          <Select
-            label="Employé"
-            options={[
-              { label: 'Sélectionner un employé', value: '' },
-              ...employeeOptions
-            ]}
-            value={selectedEmployee}
-            onChange={onEmployeeChange}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Link href="/admin/calendar">
+            <Button size="slim" variant="secondary">
+              📅 Calendrier Admin
+            </Button>
+          </Link>
         </div>
         
-        <div style={{ minWidth: '150px' }}>
-          <TextField
-            label="Date"
-            type="date"
-            value={selectedDate}
-            onChange={onDateChange}
-            autoComplete="off"
-          />
-        </div>
       </div>
     </div>
   )
