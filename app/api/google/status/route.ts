@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { isGoogleConnected, pingGoogle } from '@/lib/google';
-import { getTokens } from '@/lib/tokenStore';
+import { getTokens } from '@/lib/redis';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const tokens = getTokens();
+    const tokens = await getTokens();
     const hasTokens = !!tokens;
     const hasRefreshToken = !!(tokens?.refresh_token);
     

@@ -1,12 +1,12 @@
 import { google } from 'googleapis'
-import { getTokens, setTokens, hasTokens, GoogleTokens } from './tokenStore'
+import { getTokens, saveTokens, hasTokens, GoogleTokens, handleTokenRefresh } from './redis'
 
 export interface CalendarItem {
   id: string
   label: string
 }
 
-export function getOAuth2() {
+export async function getOAuth2() {
   const oauth2 = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
@@ -14,12 +14,12 @@ export function getOAuth2() {
   )
 
   // Si on a des tokens, les utiliser
-  const tokens = getTokens()
+  const tokens = await getTokens()
   if (tokens) {
     oauth2.setCredentials(tokens)
     
     // Écouter les refresh de tokens
-    oauth2.on('tokens', (newTokens) => {
+    oauth2.on('tokens', async (newTokens) => {
       const updatedTokens = {
         access_token: newTokens.access_token || tokens.access_token || '',
         refresh_token: newTokens.refresh_token || tokens.refresh_token,
@@ -27,7 +27,7 @@ export function getOAuth2() {
         token_type: newTokens.token_type || tokens.token_type || 'Bearer',
         scope: newTokens.scope || tokens.scope
       }
-      setTokens(updatedTokens)
+      await saveTokens(updatedTokens)
     })
   }
 
@@ -35,8 +35,8 @@ export function getOAuth2() {
 }
 
 export async function getCalendarClient() {
-  const auth = getOAuth2()
-  const tokens = getTokens()
+  const auth = await getOAuth2()
+  const tokens = await getTokens()
 
   if (!tokens) {
     const error = new Error('Tokens Google non trouvés. Veuillez vous authentifier.')
@@ -48,11 +48,11 @@ export async function getCalendarClient() {
 }
 
 export async function saveTokensToStore(tokens: GoogleTokens): Promise<boolean> {
-  return setTokens(tokens)
+  return await saveTokens(tokens)
 }
 
-export function isGoogleConnected(): boolean {
-  return hasTokens()
+export async function isGoogleConnected(): Promise<boolean> {
+  return await hasTokens()
 }
 
 export async function pingGoogle(): Promise<boolean> {
@@ -71,8 +71,8 @@ export async function pingGoogle(): Promise<boolean> {
     if (error && typeof error === 'object' && 'code' in error && 
         (error.code === 401 || error.code === 'NO_GOOGLE_TOKENS')) {
       console.log('Tokens invalides, nettoyage...');
-      const { clearTokens } = await import('./tokenStore');
-      clearTokens();
+      const { deleteTokens } = await import('./redis');
+      await deleteTokens();
     }
     return false
   }

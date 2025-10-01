@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv'
+import { createClient } from 'redis'
 
 export const GOOGLE_TOKENS_KEY = 'google:tokens:default'
 
@@ -10,60 +10,94 @@ export interface GoogleTokens {
   expiry_date: number
 }
 
+// Client Redis global
+let redisClient: ReturnType<typeof createClient> | null = null
+
 /**
- * Récupère les tokens Google depuis Vercel KV
+ * Obtient le client Redis (singleton)
+ */
+async function getRedisClient() {
+  if (!redisClient) {
+    const redisUrl = process.env.REDIS_URL
+    if (!redisUrl) {
+      throw new Error('REDIS_URL environment variable is required')
+    }
+
+    redisClient = createClient({
+      url: redisUrl
+    })
+
+    redisClient.on('error', (err) => {
+      console.error('Redis Client Error:', err)
+    })
+
+    await redisClient.connect()
+    console.log('✅ Redis client connected')
+  }
+
+  return redisClient
+}
+
+/**
+ * Récupère les tokens Google depuis Redis
  */
 export async function getTokens(): Promise<GoogleTokens | null> {
   try {
-    const tokens = await kv.get<GoogleTokens>(GOOGLE_TOKENS_KEY)
+    const client = await getRedisClient()
+    const tokensJson = await client.get(GOOGLE_TOKENS_KEY)
     
-    if (!tokens) {
-      console.log('⚠️  Aucun token Google trouvé dans KV')
+    if (!tokensJson) {
+      console.log('⚠️  Aucun token Google trouvé dans Redis')
       return null
     }
 
+    const tokens: GoogleTokens = JSON.parse(tokensJson)
+
     // Vérifier si le token n'est pas expiré
     if (tokens.expiry_date && Date.now() < tokens.expiry_date) {
-      console.log('✅ Tokens Google récupérés depuis KV (valides)')
+      console.log('✅ Tokens Google récupérés depuis Redis (valides)')
       return tokens
     } else {
-      console.log('⚠️  Token expiré, suppression de KV')
+      console.log('⚠️  Token expiré, suppression de Redis')
       await deleteTokens()
       return null
     }
   } catch (error) {
-    console.error('Erreur lors de la récupération des tokens depuis KV:', error)
+    console.error('Erreur lors de la récupération des tokens depuis Redis:', error)
     return null
   }
 }
 
 /**
- * Sauvegarde les tokens Google dans Vercel KV
+ * Sauvegarde les tokens Google dans Redis
  */
 export async function saveTokens(tokens: GoogleTokens): Promise<boolean> {
   try {
-    await kv.set(GOOGLE_TOKENS_KEY, tokens)
-    console.log('✅ Tokens Google sauvegardés dans KV')
+    const client = await getRedisClient()
+    await client.set(GOOGLE_TOKENS_KEY, JSON.stringify(tokens))
+    
+    console.log('✅ Tokens Google sauvegardés dans Redis')
     console.log('Access token:', tokens.access_token ? 'Présent' : 'Manquant')
     console.log('Refresh token:', tokens.refresh_token ? 'Présent' : 'Manquant')
     console.log('Expiry date:', new Date(tokens.expiry_date).toLocaleString())
     return true
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde des tokens dans KV:', error)
+    console.error('Erreur lors de la sauvegarde des tokens dans Redis:', error)
     return false
   }
 }
 
 /**
- * Supprime les tokens Google de Vercel KV
+ * Supprime les tokens Google de Redis
  */
 export async function deleteTokens(): Promise<boolean> {
   try {
-    await kv.del(GOOGLE_TOKENS_KEY)
-    console.log('✅ Tokens Google supprimés de KV')
+    const client = await getRedisClient()
+    await client.del(GOOGLE_TOKENS_KEY)
+    console.log('✅ Tokens Google supprimés de Redis')
     return true
   } catch (error) {
-    console.error('Erreur lors de la suppression des tokens de KV:', error)
+    console.error('Erreur lors de la suppression des tokens de Redis:', error)
     return false
   }
 }
@@ -132,4 +166,15 @@ export async function handleTokenRefresh(tokens: GoogleTokens): Promise<GoogleTo
     console.error('❌ Échec du refresh des tokens:', error)
   }
   return null
+}
+
+/**
+ * Ferme la connexion Redis
+ */
+export async function closeRedisConnection() {
+  if (redisClient) {
+    await redisClient.quit()
+    redisClient = null
+    console.log('✅ Redis connection closed')
+  }
 }

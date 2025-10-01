@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       )
     }
     
-    const oauth2 = getOAuth2()
+    const oauth2 = await getOAuth2()
     
     const authUrl = oauth2.generateAuthUrl({
       access_type: 'offline',

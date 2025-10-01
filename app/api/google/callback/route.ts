@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     }
 
     console.log('Échange du code OAuth pour obtenir les tokens...');
-    const oauth2 = getOAuth2()
+    const oauth2 = await getOAuth2()
     const { tokens } = await oauth2.getToken(code)
 
     if (!tokens) {
