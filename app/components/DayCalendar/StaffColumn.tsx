@@ -82,7 +82,10 @@ interface StaffColumnProps {
   opening: string
   pxPerMinute: number
   busyEvents: Array<{ start: string; end: string; title?: string; summary?: string }>
-  onTimeSlotSelect: (employeeId: string, dateISO: string, minuteOffset: number) => void
+  onTimeSlotSelect: (employeeId: string, dateISO: string, hour: number, minute: number) => void
+  zoomLevel?: '30min' | '15min'
+  isDarkMode?: boolean
+  isMobile?: boolean
 }
 
 export function StaffColumn({ 
@@ -91,53 +94,41 @@ export function StaffColumn({
   opening, 
   pxPerMinute, 
   busyEvents,
-  onTimeSlotSelect 
+  onTimeSlotSelect,
+  zoomLevel = '30min',
+  isDarkMode = false,
+  isMobile = false
 }: StaffColumnProps) {
   const { open, close } = getOpeningMinutes(opening)
   const totalMinutes = close - open
   const height = totalMinutes * pxPerMinute
 
-  const handleTimeSlotClick = (minuteOffset: number) => {
-    onTimeSlotSelect(employee.id, selectedDate, minuteOffset)
+  const handleTimeSlotClick = (hour: number, minute: number) => {
+    onTimeSlotSelect(employee.id, selectedDate, hour, minute)
   }
 
   return (
     <div
-      style={{
-        position: 'relative',
-        width: '200px',
-        height: height,
-        borderRight: '1px solid #e1e3e5',
-        backgroundColor: 'white'
-      }}
-    >
-      {/* Employee header */}
-      <div
         style={{
-          position: 'sticky',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '40px',
-          backgroundColor: '#f9fafb',
-          borderBottom: '1px solid #e1e3e5',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontWeight: '600',
-          fontSize: '14px',
-          color: '#374151',
-          zIndex: 10
+          position: 'relative',
+          width: isMobile ? '100%' : '200px',
+          height: height,
+          borderRight: isDarkMode ? '1px solid #374151' : '1px solid #e1e3e5',
+          backgroundColor: isDarkMode ? '#1f2937' : 'white'
         }}
-      >
-        {employee.label}
-      </div>
+    >
 
       {/* Time slots */}
-      {Array.from({ length: Math.ceil(totalMinutes / 15) }, (_, i) => {
-        const slotMinutes = open + (i * 15)
+      {Array.from({ length: Math.ceil(totalMinutes / (zoomLevel === '15min' ? 15 : 30)) }, (_, i) => {
+        const slotInterval = zoomLevel === '15min' ? 15 : 30
+        const slotMinutes = open + (i * slotInterval)
         const yPosition = (slotMinutes - open) * pxPerMinute
-        const slotHeight = 15 * pxPerMinute
+        const slotHeight = slotInterval * pxPerMinute
+
+        // Debug: vérifier que slotMinutes est valide
+        if (slotMinutes < 0 || slotMinutes > 1440) {
+          console.error('Invalid slotMinutes:', { slotMinutes, open, i, slotInterval, totalMinutes })
+        }
 
         // Check if this slot is busy and get the event title
         const busyEvent = busyEvents.find(event => {
@@ -147,14 +138,20 @@ export function StaffColumn({
           const hour = Math.floor(slotMinutes / 60)
           const minute = slotMinutes % 60
           const slotStart = dayjs.tz(`${selectedDate}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`, DEFAULT_TZ)
-          const slotEnd = slotStart.add(15, 'minute')
+          const slotEnd = slotStart.add(slotInterval, 'minute')
 
           return slotStart.isBefore(eventEnd) && slotEnd.isAfter(eventStart)
         })
         const isBusy = !!busyEvent
         const eventTitle = busyEvent?.title || busyEvent?.summary || 'Rendez-vous'
 
-        const timecellId = `timecell_${employee.id}_${selectedDate}_${slotMinutes}`
+        // Utiliser l'heure et minute directement au lieu de slotMinutes
+        const hour = Math.floor(slotMinutes / 60)
+        const minute = slotMinutes % 60
+        const dateWithoutDashes = selectedDate.replace(/-/g, '')
+        // Encoder l'ID employé pour éviter les conflits avec les underscores
+        const encodedEmployeeId = employee.id.replace(/_/g, 'UNDERSCORE')
+        const timecellId = `timecell_${encodedEmployeeId}_${dateWithoutDashes}_${hour.toString().padStart(2, '0')}_${minute.toString().padStart(2, '0')}`
         
         return (
           <TimeSlotDroppable
@@ -165,7 +162,7 @@ export function StaffColumn({
             slotHeight={slotHeight}
             isBusy={isBusy}
             eventTitle={eventTitle}
-            onClick={() => handleTimeSlotClick(slotMinutes)}
+            onClick={() => handleTimeSlotClick(hour, minute)}
           />
         )
       })}
@@ -178,14 +175,14 @@ export function StaffColumn({
         return (
           <div
             key={hourMinutes}
-            style={{
-              position: 'absolute',
-              top: yPosition,
-              left: 0,
-              right: 0,
-              height: '1px',
-              backgroundColor: '#e1e3e5'
-            }}
+                style={{
+                  position: 'absolute',
+                  top: yPosition,
+                  left: 0,
+                  right: 0,
+                  height: '1px',
+                  backgroundColor: isDarkMode ? '#374151' : '#e1e3e5'
+                }}
           />
         )
       })}

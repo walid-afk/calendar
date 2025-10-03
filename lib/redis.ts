@@ -39,6 +39,24 @@ async function getRedisClient() {
 }
 
 /**
+ * Export du client Redis pour les API routes
+ */
+export const redis = {
+  async get(key: string): Promise<string | null> {
+    const client = await getRedisClient()
+    return await client.get(key)
+  },
+  async set(key: string, value: string): Promise<void> {
+    const client = await getRedisClient()
+    await client.set(key, value)
+  },
+  async del(key: string): Promise<void> {
+    const client = await getRedisClient()
+    await client.del(key)
+  }
+}
+
+/**
  * Récupère les tokens Google depuis Redis
  */
 export async function getTokens(): Promise<GoogleTokens | null> {

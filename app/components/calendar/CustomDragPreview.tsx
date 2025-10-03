@@ -33,7 +33,7 @@ export default function CustomDragPreview({ block, isVisible = false }: CustomDr
         className="bg-white border-2 border-blue-400 text-gray-800 rounded-lg p-4 shadow-xl opacity-90"
         style={{
           width: '280px',
-          transform: 'translate(-50%, -50%)', // Centrer sur le curseur
+          transform: 'translate(-50%, 0%)', // Centrer horizontalement, aligner le haut avec le curseur
         }}
       >
         {/* En-tête */}

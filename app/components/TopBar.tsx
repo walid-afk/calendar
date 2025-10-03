@@ -17,6 +17,8 @@ interface TopBarProps {
   selectedDate: string
   onDateChange: (date: string) => void
   onGoogleAuth: () => void
+  isDarkMode?: boolean
+  onToggleDarkMode?: () => void
 }
 
 export function TopBar({
@@ -26,7 +28,9 @@ export function TopBar({
   onEmployeeChange,
   selectedDate,
   onDateChange,
-  onGoogleAuth
+  onGoogleAuth,
+  isDarkMode = false,
+  onToggleDarkMode
 }: TopBarProps) {
   const employeeOptions = employees.map(emp => ({
     label: emp.label,
@@ -42,13 +46,32 @@ export function TopBar({
   )
 
   return (
-    <div style={{ backgroundColor: '#f6f6f7', borderBottom: '1px solid #e1e3e5' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%' }}>
+    <div style={{ 
+      backgroundColor: isDarkMode ? '#1f2937' : '#f6f6f7', 
+      borderBottom: `1px solid ${isDarkMode ? '#374151' : '#e1e3e5'}`,
+      color: isDarkMode ? '#f9fafb' : '#111827'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', width: '100%', padding: '8px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {googleStatus}
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {onToggleDarkMode && (
+            <Button 
+              size="slim" 
+              variant="secondary"
+              onClick={onToggleDarkMode}
+              icon={() => (
+                <span style={{ fontSize: '16px' }}>
+                  {isDarkMode ? '☀️' : '🌙'}
+                </span>
+              )}
+            >
+              {isDarkMode ? 'Mode clair' : 'Mode sombre'}
+            </Button>
+          )}
+          
           <Link href="/admin/calendar">
             <Button size="slim" variant="secondary">
               📅 Calendrier Admin

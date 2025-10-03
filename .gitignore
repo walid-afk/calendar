@@ -38,3 +38,5 @@ next-env.d.ts
 
 # google tokens storage
 .data/
+
+.vercel

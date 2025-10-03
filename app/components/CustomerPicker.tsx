@@ -15,12 +15,14 @@ interface CustomerPickerProps {
   selectedCustomer: Customer | null
   onCustomerSelect: (customer: Customer) => void
   onCustomerCreate: (customer: Customer) => void
+  isDarkMode?: boolean
 }
 
 export function CustomerPicker({ 
   selectedCustomer, 
   onCustomerSelect, 
-  onCustomerCreate 
+  onCustomerCreate,
+  isDarkMode = false
 }: CustomerPickerProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Customer[]>([])
@@ -161,14 +163,14 @@ export function CustomerPicker({
                 marginTop: '16px', 
                 maxHeight: '300px', 
                 overflowY: 'auto', 
-                border: '1px solid var(--p-color-border)', 
+                border: isDarkMode ? '1px solid #4b5563' : '1px solid var(--p-color-border)', 
                 borderRadius: 'var(--p-border-radius-100)',
-                backgroundColor: 'var(--p-color-bg-surface)'
+                backgroundColor: isDarkMode ? '#1f2937' : 'var(--p-color-bg-surface)'
               }}>
                 <div style={{ 
                   padding: '8px 12px', 
-                  borderBottom: '1px solid var(--p-color-border)', 
-                  backgroundColor: 'var(--p-color-bg-surface-subdued)'
+                  borderBottom: isDarkMode ? '1px solid #4b5563' : '1px solid var(--p-color-border)', 
+                  backgroundColor: isDarkMode ? '#374151' : 'var(--p-color-bg-surface-subdued)'
                 }}>
                   <Text as="p" variant="bodySm">
                     {searchResults.length} client{searchResults.length > 1 ? 's' : ''} trouvé{searchResults.length > 1 ? 's' : ''}
@@ -181,14 +183,15 @@ export function CustomerPicker({
                     style={{ 
                       padding: '12px', 
                       cursor: 'pointer', 
-                      borderBottom: index < searchResults.length - 1 ? '1px solid var(--p-color-border-subdued)' : 'none',
-                      transition: 'background-color 0.2s ease'
+                      borderBottom: index < searchResults.length - 1 ? (isDarkMode ? '1px solid #4b5563' : '1px solid var(--p-color-border-subdued)') : 'none',
+                      transition: 'background-color 0.2s ease',
+                      backgroundColor: isDarkMode ? '#1f2937' : 'transparent'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--p-color-bg-surface-hover)'
+                      e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : 'var(--p-color-bg-surface-hover)'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent'
+                      e.currentTarget.style.backgroundColor = isDarkMode ? '#1f2937' : 'transparent'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

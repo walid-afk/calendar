@@ -41,6 +41,95 @@ a {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode styles */
+.booking-container.dark-mode {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+.booking-container.dark-mode .Polaris-Card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.booking-container.dark-mode .Polaris-Card__Section {
+  color: #f9fafb;
+}
+
+.booking-container.dark-mode .Polaris-Button--primary {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.booking-container.dark-mode .Polaris-Button--primary:hover {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.booking-container.dark-mode .Polaris-Button--secondary {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.booking-container.dark-mode .Polaris-Button--secondary:hover {
+  background-color: #4b5563;
+  border-color: #6b7280;
+}
+
+.booking-container.dark-mode .Polaris-Button--tertiary {
+  color: #9ca3af;
+}
+
+.booking-container.dark-mode .Polaris-Button--tertiary:hover {
+  background-color: #374151;
+  color: #f9fafb;
+}
+
+.booking-container.dark-mode .Polaris-TextField__Input {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.booking-container.dark-mode .Polaris-TextField__Input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.booking-container.dark-mode .Polaris-Select__Input {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.booking-container.dark-mode .Polaris-Select__Input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.booking-container.dark-mode .Polaris-Banner {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.booking-container.dark-mode .Polaris-Badge {
+  background-color: #374151;
+  color: #f9fafb;
+}
+
+.booking-container.dark-mode .Polaris-Badge--success {
+  background-color: #065f46;
+  color: #d1fae5;
+}
+
+.booking-container.dark-mode .Polaris-Badge--critical {
+  background-color: #7f1d1d;
+  color: #fecaca;
 }
 
 .booking-grid {
@@ -54,6 +143,7 @@ a {
   grid-column: 1 / -1;
 }
 
+/* Responsive design */
 @media (max-width: 768px) {
   .booking-grid {
     grid-template-columns: 1fr;
@@ -61,6 +151,113 @@ a {
   
   .booking-container {
     padding: 10px;
+  }
+}
+
+/* Mobile calendar styles */
+.calendar-container.mobile {
+  width: 100%;
+}
+
+.mobile-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.time-range-selector {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.mobile-calendar-view {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Desktop calendar styles */
+.calendar-container.desktop {
+  width: 100%;
+}
+
+.desktop-calendar {
+  width: 100%;
+}
+
+.calendar-grid {
+  display: flex;
+  gap: 16px;
+  height: 500px;
+  overflow: visible;
+}
+
+.calendar-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-title {
+  text-align: center;
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #111827;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .calendar-grid {
+    flex-direction: column;
+    height: auto;
+    gap: 20px;
+  }
+  
+  .calendar-section {
+    height: 300px;
+  }
+  
+  .section-title {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  
+  .time-range-selector {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .mobile-calendar-view {
+    height: 300px;
+    overflow-y: auto;
+  }
+}
+
+/* Dark mode adjustments */
+.booking-container.dark-mode .section-title {
+  color: #f9fafb;
+}
+
+.booking-container.dark-mode .calendar-container {
+  background-color: #1f2937;
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .slot-cell {
+    min-height: 44px;
+    font-size: 14px;
+  }
+  
+  .Polaris-Button {
+    min-height: 44px;
+  }
+  
+  .time-range-selector .Polaris-Button {
+    min-height: 48px;
+    font-size: 16px;
   }
 }
 

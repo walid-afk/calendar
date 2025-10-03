@@ -17,6 +17,8 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
 import 'dayjs/locale/fr'
+import { AuthProvider, useAuth } from '@/app/components/auth/AuthProvider'
+import { SetupWizard } from '@/app/components/setup/SetupWizard'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -54,6 +56,7 @@ import { Toolbar } from '@/app/components/DayCalendar/Toolbar'
 import { DEFAULT_TZ, getOpeningMinutes, isBeforeLeadTime } from '@/lib/time'
 import { hasConflict } from '@/lib/slots'
 import { restrictToVerticalAxis, snapTo15min, restrictToCalendarBounds } from '@/lib/dnd/modifiers'
+import { closestCorners } from '@dnd-kit/core'
 // Fonction locale pour obtenir la date d'aujourd'hui
 function today(): string {
   return new Date().toISOString().split('T')[0]
@@ -108,12 +111,16 @@ interface SlotData {
   step: number
 }
 
-export default function EmployeePage() {
+function EmployeePageContent() {
+  const { user, isLoading, sessionId } = useAuth()
 
   // État d'authentification
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [passcode, setPasscode] = useState('')
+  const [isAuthenticated, setIsAuthenticated] = useState(true) // Toujours authentifié
+  const [passcode] = useState('1234') // Code fixe pour les API
   const [authError, setAuthError] = useState<string | null>(null)
+  
+  // État du dark mode
+  const [isDarkMode, setIsDarkMode] = useState(false)
 
   // État de l'interface
   const [isGoogleConnected, setIsGoogleConnected] = useState(false)
@@ -182,7 +189,7 @@ export default function EmployeePage() {
   const [isDragging, setIsDragging] = useState(false)
 
   // Busy events state (moved from DayCalendarView)
-  const [busyEvents, setBusyEvents] = useState<Record<string, Array<{ start: string; end: string }>>>({})
+  const [busyEvents, setBusyEvents] = useState<Record<string, Array<{ start: string; end: string; title?: string }>>>({})
   const [loadingBusyEvents, setLoadingBusyEvents] = useState(false)
 
   // DND sensors - always at top level
@@ -206,8 +213,12 @@ export default function EmployeePage() {
   const morningMinutes = morningClose - morningOpen
   const afternoonMinutes = afternoonClose - afternoonOpen
   
-  const containerHeight = 500 // Hauteur fixe de 500px par plage
-  const pxPerMinute = containerHeight / morningMinutes // Même échelle pour les deux
+  // État du zoom
+  const [zoomLevel, setZoomLevel] = useState<'30min' | '15min'>('30min')
+  
+  // Calcul des dimensions selon le zoom
+  const containerHeight = zoomLevel === '15min' ? 300 : 500 // Plus petit en vue 15min
+  const pxPerMinute = zoomLevel === '15min' ? 4 : (containerHeight / morningMinutes) // 4px/min en vue 15min
   const headerHeight = 40
 
   // Safe modifiers with conditional application (moved from DayCalendarView)
@@ -237,7 +248,9 @@ export default function EmployeePage() {
   
   // Détection mobile/tactile
   const [isTouch, setIsTouch] = useState(false)
-  const [showPinPad, setShowPinPad] = useState(false)
+  
+  // État pour la sélection de plage horaire mobile
+  const [selectedTimeRange, setSelectedTimeRange] = useState<'morning' | 'afternoon'>('morning')
   
   // Fonction de gestion du changement de date
   const handleDateChange = useCallback((newDate: string) => {
@@ -245,21 +258,17 @@ export default function EmployeePage() {
     const dateObj = new Date(newDate)
     setMonth(dateObj.getMonth())
     setYear(dateObj.getFullYear())
+    // Remettre en vue 30min lors du changement de jour
+    setZoomLevel('30min')
+    // Reset à la plage matin sur mobile
+    setSelectedTimeRange('morning')
   }, [])
   
-  // Gestion du PinPad mobile
-  const handlePinPadConfirm = useCallback((startTime: string, endTime: string) => {
-    const start = dayjs(`${selectedDate}T${startTime}:00`).toISOString()
-    const end = dayjs(`${selectedDate}T${endTime}:00`).toISOString()
-    
-    setPendingBooking({
-      start,
-      end,
-      services: validatedBlock?.services || []
-    })
-    setShowConfirmModal(true)
-    setShowPinPad(false)
-  }, [selectedDate, validatedBlock])
+  // Fonction de changement de zoom
+  const handleZoomChange = useCallback(() => {
+    setZoomLevel(prev => prev === '30min' ? '15min' : '30min')
+  }, [])
+  
 
   // État de la connexion Google
   const [gStatus, setGStatus] = useState<'unknown'|'connected'|'disconnected'|'connecting'>('unknown')
@@ -267,12 +276,10 @@ export default function EmployeePage() {
 
   // Chargement initial
   useEffect(() => {
-    // Ne pas charger automatiquement le passcode pour forcer la saisie manuelle
-    // const savedPasscode = localStorage.getItem('passcode')
-    // if (savedPasscode) {
-    //   setPasscode(savedPasscode)
-    //   handleAuth(savedPasscode)
-    // }
+    // Ne charger les données que si l'utilisateur est connecté et configuré
+    if (!user || !user.preferences.calendarType || !user.preferences.serviceSource) {
+      return
+    }
     
     // Vérifier le statut Google au chargement
     checkGoogleStatus()
@@ -316,40 +323,40 @@ export default function EmployeePage() {
       window.removeEventListener('message', handler)
       window.removeEventListener('google-connection-required', handleGoogleConnectionRequired)
     }
-  }, [])
+  }, [user])
 
 
-  // Vérification de la connexion Google
+  // Vérification de la connexion Google - seulement si connecté
   useEffect(() => {
-    if (isAuthenticated) {
+    if (user && user.preferences.calendarType && user.preferences.serviceSource) {
       checkGoogleConnection()
     }
-  }, [isAuthenticated])
+  }, [user])
 
-  // Chargement des employés
+  // Chargement des employés - seulement si connecté
   useEffect(() => {
-    if (isGoogleConnected && isAuthenticated && passcode) {
+    if (user && user.preferences.calendarType && user.preferences.serviceSource && isGoogleConnected && passcode) {
       loadEmployees()
     }
-  }, [isGoogleConnected, isAuthenticated, passcode])
+  }, [user, isGoogleConnected, passcode])
 
-  // Chargement des services
+  // Chargement des services - seulement si connecté
   useEffect(() => {
-    if (isAuthenticated) {
+    if (user && user.preferences.calendarType && user.preferences.serviceSource) {
       loadServices()
     }
-  }, [isAuthenticated])
+  }, [user])
 
-  // Rechargement des services quand les filtres changent
+  // Rechargement des services quand les filtres changent - seulement si connecté
   useEffect(() => {
-    if (isAuthenticated) {
+    if (user && user.preferences.calendarType && user.preferences.serviceSource) {
       loadServices(categoryFilters.collectionId, categoryFilters.subcategory, categoryFilters.area)
     }
-  }, [categoryFilters, isAuthenticated])
+  }, [user, categoryFilters])
   
   // Load busy events for all employees (moved from DayCalendarView)
   const loadBusyEvents = useCallback(async () => {
-    if (employees.length === 0) return
+    if (!user || !user.preferences.calendarType || !user.preferences.serviceSource || employees.length === 0) return
 
     setLoadingBusyEvents(true)
     try {
@@ -372,36 +379,15 @@ export default function EmployeePage() {
           return []
         }
         const data = await response.json()
-        const busyCells = (data.cells || [])
-          .filter((cell: any) => cell.busy)
-          .map((cell: any) => {
-            // Les dates de l'API sont en UTC, les garder telles quelles
-            const startISO = cell.start
-            const endISO = cell.end
-            
-            // Debug: afficher l'heure locale pour vérification
-            const startLocal = dayjs(startISO).tz(DEFAULT_TZ)
-            const endLocal = dayjs(endISO).tz(DEFAULT_TZ)
-            
-            console.log('Busy cell:', {
-              startISO,
-              endISO,
-              startLocal: startLocal.format('HH:mm'),
-              endLocal: endLocal.format('HH:mm')
-            })
-            
-            return { 
-              start: startISO, 
-              end: endISO,
-              title: cell.title || cell.summary || 'Occupé'
-            }
-          })
-        console.log(`Busy events for ${employee.id}:`, busyCells.length, 'events')
-        return busyCells
+        // Utiliser les événements groupés retournés par l'API
+        const busyEvents = data.busyEvents || []
+        
+        console.log(`Busy events for ${employee.id}:`, busyEvents.length, 'events')
+        return busyEvents
       })
 
       const results = await Promise.all(promises)
-      const newBusyEvents: Record<string, Array<{ start: string; end: string }>> = {}
+      const newBusyEvents: Record<string, Array<{ start: string; end: string; title?: string }>> = {}
       employees.forEach((employee, index) => {
         newBusyEvents[employee.id] = results[index]
       })
@@ -414,8 +400,10 @@ export default function EmployeePage() {
   }, [employees, selectedDate, passcode])
 
   useEffect(() => {
-    loadBusyEvents()
-  }, [loadBusyEvents])
+    if (user && user.preferences.calendarType && user.preferences.serviceSource) {
+      loadBusyEvents()
+    }
+  }, [user, loadBusyEvents])
 
   // Date navigation handlers
   const handlePrevDay = useCallback(() => {
@@ -449,33 +437,11 @@ export default function EmployeePage() {
     }
   }, [selectedEmployee, selectedDate, selectedVariant])
 
-  const handleAuth = async (code: string) => {
-    // Code d'accès : 1234 = production
-    if (code === '1234') {
-      // Mode production : vérifier avec l'API
-      try {
-        const response = await fetch('/api/auth/check', {
-          headers: { 'x-passcode': code }
-        })
-        
-        if (response.ok) {
-          setIsAuthenticated(true)
-          localStorage.setItem('passcode', code)
-          setAuthError(null)
-        } else {
-          setAuthError('Code d\'accès invalide')
-        }
-      } catch (error) {
-        setAuthError('Erreur de connexion')
-      }
-    } else {
-      setAuthError('Code d\'accès invalide')
-    }
-  }
+  // Fonction d'authentification supprimée - plus besoin de password
 
   const checkGoogleConnection = async () => {
-    if (!isAuthenticated || !passcode) {
-      return // Ne pas vérifier Google si pas authentifié
+    if (!passcode) {
+      return // Ne pas vérifier Google si pas de passcode
     }
     
     // Mode production : vérifier la vraie connexion Google
@@ -831,6 +797,18 @@ export default function EmployeePage() {
 
   // Validate booking function (moved from DayCalendarView)
   const validateBooking = useCallback((start: dayjs.Dayjs, end: dayjs.Dayjs, employeeId: string): boolean => {
+    // Vérifier que les dates sont valides avant d'utiliser toISOString()
+    if (!start.isValid() || !end.isValid()) {
+      console.error('Invalid dates in validateBooking:', {
+        startValid: start.isValid(),
+        endValid: end.isValid(),
+        start: start.format(),
+        end: end.format()
+      })
+      setToast({ content: 'Dates invalides pour la réservation', isError: true })
+      return false
+    }
+
     console.log('Validation booking:', {
       start: start.format('YYYY-MM-DD HH:mm:ss'),
       end: end.format('YYYY-MM-DD HH:mm:ss'),
@@ -867,14 +845,26 @@ export default function EmployeePage() {
 
     if (over && over.id.toString().startsWith('timecell_')) {
       const parts = over.id.toString().split('_')
-      const employeeId = parts[1]
-      const dateISO = parts[2]
-      const minuteOffset = parseInt(parts[3], 10)
-      console.log('Parsed drop data:', { parts, employeeId, dateISO, minuteOffset })
-
-      // minuteOffset est en minutes depuis minuit
-      const hour = Math.floor(minuteOffset / 60)
-      const minute = minuteOffset % 60
+      console.log('Raw timecell ID parts:', parts)
+      
+      // Décoder l'ID employé
+      const encodedEmployeeId = parts[1]
+      const employeeId = encodedEmployeeId.replace(/UNDERSCORE/g, '_')
+      const dateWithoutDashes = parts[2]
+      const hour = parseInt(parts[3], 10)
+      const minute = parseInt(parts[4], 10)
+      
+      // Reconstituer la date ISO
+      const dateISO = `${dateWithoutDashes.slice(0,4)}-${dateWithoutDashes.slice(4,6)}-${dateWithoutDashes.slice(6,8)}`
+      
+      console.log('Parsed drop data:', { parts, employeeId, dateISO, hour, minute })
+      
+      // Vérifier que les heures sont valides (0-23)
+      if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+        console.error('Invalid time values:', { hour, minute })
+        setToast({ content: 'Heure invalide', isError: true })
+        return
+      }
       
       const hourStr = hour.toString().padStart(2, '0')
       const minuteStr = minute.toString().padStart(2, '0')
@@ -884,15 +874,21 @@ export default function EmployeePage() {
         dateISO,
         hour,
         minute,
-        minuteOffset,
         hourStr,
         minuteStr,
         dateTimeStr,
         DEFAULT_TZ
       })
       
+      // Vérifier que la durée est valide
+      if (!currentDraft.durationMin || currentDraft.durationMin <= 0) {
+        console.error('Invalid duration:', currentDraft.durationMin)
+        setToast({ content: 'Durée de prestation invalide', isError: true })
+        return
+      }
+      
       // Utiliser dayjs.tz pour parser dans le bon timezone
-      const startTime = dayjs.tz(dateTimeStr, DEFAULT_TZ)
+      const startTime = dayjs(dateTimeStr).tz(DEFAULT_TZ)
       const endTime = startTime.add(currentDraft.durationMin, 'minutes')
       
       console.log('Calculated times:', {
@@ -901,6 +897,19 @@ export default function EmployeePage() {
         startTimeValid: startTime.isValid(),
         endTimeValid: endTime.isValid()
       })
+
+      // Vérifier que les dates sont valides avant de continuer
+      if (!startTime.isValid() || !endTime.isValid()) {
+        console.error('Invalid dates calculated:', {
+          dateTimeStr,
+          startTimeValid: startTime.isValid(),
+          endTimeValid: endTime.isValid(),
+          startTime: startTime.format(),
+          endTime: endTime.format()
+        })
+        setToast({ content: 'Erreur de calcul des horaires', isError: true })
+        return
+      }
 
       if (!validateBooking(startTime, endTime, employeeId)) {
         // Le bloc draggable reste visible si la validation échoue
@@ -933,18 +942,45 @@ export default function EmployeePage() {
   }, [currentDraft, selectedCustomer, validatedBlock, validateBooking])
 
   // New onTimeSlotDrop handler for DayCalendarView (when clicking a slot)
-  const handleTimeSlotDrop = useCallback((employeeId: string, dateISO: string, minuteOffset: number) => {
+  const handleTimeSlotDrop = useCallback((employeeId: string, dateISO: string, hour: number, minute: number) => {
     if (!currentDraft || !selectedCustomer) {
       console.warn('No active draft or customer selected.')
       setToast({ content: 'Aucune prestation ou client sélectionné pour la réservation.', isError: true })
       return
     }
 
-    const hour = Math.floor(minuteOffset / 60)
-    const minute = minuteOffset % 60
+    console.log('handleTimeSlotDrop - Received hour/minute:', { hour, minute })
+    
+    // Vérifier que les heures sont valides (0-23)
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      console.error('Invalid time values in handleTimeSlotDrop:', { hour, minute })
+      setToast({ content: 'Heure invalide', isError: true })
+      return
+    }
+    
+    // Vérifier que la durée est valide
+    if (!currentDraft.durationMin || currentDraft.durationMin <= 0) {
+      console.error('Invalid duration in handleTimeSlotDrop:', currentDraft.durationMin)
+      setToast({ content: 'Durée de prestation invalide', isError: true })
+      return
+    }
+    
     // Utiliser dayjs.tz pour parser dans le bon timezone
     const startTime = dayjs.tz(`${dateISO}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`, DEFAULT_TZ)
     const endTime = startTime.add(currentDraft.durationMin, 'minutes')
+    
+    // Vérifier que les dates sont valides
+    if (!startTime.isValid() || !endTime.isValid()) {
+      console.error('Invalid dates in handleTimeSlotDrop:', {
+        dateISO,
+        hour,
+        minute,
+        startTimeValid: startTime.isValid(),
+        endTimeValid: endTime.isValid()
+      })
+      setToast({ content: 'Erreur de calcul des horaires', isError: true })
+      return
+    }
 
     if (!validateBooking(startTime, endTime, employeeId)) {
       return
@@ -1145,38 +1181,26 @@ export default function EmployeePage() {
   const canBook = selectedEmployee && selectedDate && selectedStart && selectedEnd && 
                   cartItems.length > 0 && selectedCustomer
 
-  // Interface de connexion
-  if (!isAuthenticated) {
+  // Fonction de basculement du dark mode
+  const toggleDarkMode = useCallback(() => {
+    setIsDarkMode(prev => !prev)
+  }, [])
+
+  // Afficher le setup wizard si l'utilisateur n'est pas configuré
+  if (isLoading) {
     return (
-      <div className="passcode-gate">
-        <Card>
-          <div className="passcode-form">
-            <TextField
-              label="Code d'accès"
-              value={passcode}
-              onChange={setPasscode}
-              type="password"
-              placeholder="Entrez votre code d'accès"
-              autoComplete="current-password"
-            />
-            {authError && (
-              <div style={{ marginTop: '8px' }}>
-                <Banner tone="critical">{authError}</Banner>
-              </div>
-            )}
-            <div style={{ marginTop: '16px' }}>
-              <Button
-                variant="primary"
-                onClick={() => handleAuth(passcode)}
-                disabled={!passcode.trim()}
-              >
-                Se connecter
-              </Button>
-            </div>
+      <Frame>
+        <Page title="Interface Employés RDV">
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+            <div>Chargement...</div>
           </div>
-        </Card>
-      </div>
+        </Page>
+      </Frame>
     )
+  }
+
+  if (!user || !user.preferences.calendarType || !user.preferences.serviceSource) {
+    return <SetupWizard isDarkMode={isDarkMode} />
   }
 
   return (
@@ -1190,9 +1214,11 @@ export default function EmployeePage() {
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
           onGoogleAuth={startGoogleLogin}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={toggleDarkMode}
         />
 
-        <div className="booking-container">
+        <div className={`booking-container ${isDarkMode ? 'dark-mode' : ''}`}>
           {showGoogleConnectionPrompt && (
             <div style={{ 
               display: 'flex', 
@@ -1205,7 +1231,7 @@ export default function EmployeePage() {
                 <div style={{ 
                   padding: '40px', 
                   textAlign: 'center',
-                  maxWidth: '400px'
+                  maxWidth: '500px'
                 }}>
                   <div style={{ 
                     fontSize: '48px', 
@@ -1220,23 +1246,56 @@ export default function EmployeePage() {
                     fontSize: '20px',
                     fontWeight: '600'
                   }}>
-                    Connecte-toi à Google
+                    Connecte ton calendrier
                   </h2>
                   <p style={{ 
                     marginBottom: '24px',
                     color: '#6b7280',
                     lineHeight: '1.5'
                   }}>
-                    Connecte-toi à Google pour afficher et réserver des créneaux.
+                    Choisis comment tu veux connecter ton calendrier pour afficher et réserver des créneaux.
                   </p>
-                  <Button 
-                    onClick={startGoogleLogin} 
-                    variant="primary"
-                    size="large"
-                    disabled={gStatus === 'connecting'}
-                  >
-                    {gStatus === 'connecting' ? 'Connexion en cours...' : 'Se connecter à Google'}
-                  </Button>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <Button 
+                      onClick={startGoogleLogin} 
+                      variant="primary"
+                      size="large"
+                      disabled={gStatus === 'connecting'}
+                      icon={() => (
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                      )}
+                    >
+                      {gStatus === 'connecting' ? 'Connexion en cours...' : 'Se connecter avec Google'}
+                    </Button>
+                    
+                    <Button 
+                      variant="secondary"
+                      size="large"
+                      onClick={() => {
+                        setToast({ content: 'Fonctionnalité iCal à venir', isError: false })
+                      }}
+                    >
+                      Importer un calendrier iCal
+                    </Button>
+                    
+                    <Button 
+                      variant="tertiary"
+                      size="large"
+                      onClick={() => {
+                        setToast({ content: 'Mode sans calendrier activé', isError: false })
+                        setShowGoogleConnectionPrompt(false)
+                      }}
+                    >
+                      Je n'ai pas de calendrier
+                    </Button>
+                  </div>
+                  
                   {gStatus === 'connecting' && (
                     <div style={{ 
                       marginTop: '16px',
@@ -1268,6 +1327,7 @@ export default function EmployeePage() {
                 <ServiceSelector
                   onVariantSelect={handleVariantSelect}
                   selectedVariant={selectedVariant}
+                  isDarkMode={isDarkMode}
                 />
               </div>
 
@@ -1276,6 +1336,7 @@ export default function EmployeePage() {
                   items={cartItems}
                   onRemoveItem={handleRemoveService}
                   onClearCart={handleClearCart}
+                  isDarkMode={isDarkMode}
                 />
                 {selectedVariant && (
                   <div style={{ marginTop: '16px' }}>
@@ -1297,6 +1358,7 @@ export default function EmployeePage() {
                   selectedCustomer={selectedCustomer}
                   onCustomerSelect={handleCustomerSelect}
                   onCustomerCreate={handleCustomerCreate}
+                  isDarkMode={isDarkMode}
                 />
               </div>
 
@@ -1305,7 +1367,8 @@ export default function EmployeePage() {
                 <StaffPicker 
                   employees={employees} 
                   value={selectedEmployee} 
-                  onChange={setSelectedEmployee} 
+                  onChange={setSelectedEmployee}
+                  isDarkMode={isDarkMode}
                 />
               </div>
 
@@ -1318,47 +1381,16 @@ export default function EmployeePage() {
                     onPrevDay={handlePrevDay}
                     onNextDay={handleNextDay}
                     onReload={loadBusyEvents}
+                    isDarkMode={isDarkMode}
                   />
                 </Card>
               </div>
 
-              {/* Bloc mobile uniquement */}
-              {validatedBlock && isTouch && (
-                  <div className="booking-full-width mb-6">
-                      <div className="relative bg-white border-2 border-gray-300 text-gray-800 rounded-lg p-4">
-                        <div className="mb-3">
-                          <div className="text-lg font-bold text-gray-800">{validatedBlock.title}</div>
-                          <div className="text-sm text-gray-600">
-                            {TimeUtils.formatDuration(validatedBlock.durationMin)}
-                          </div>
-                        </div>
-                        <div className="space-y-1 mb-3">
-                          {validatedBlock.services.slice(0, 2).map((service, index) => (
-                            <div key={index} className="text-sm text-gray-700 truncate">
-                              • {service.title}
-                            </div>
-                          ))}
-                          {validatedBlock.services.length > 2 && (
-                            <div className="text-xs text-gray-500">
-                              +{validatedBlock.services.length - 2} autres...
-                            </div>
-                          )}
-                        </div>
-                        <Button
-                      variant="primary"
-                          onClick={() => setShowPinPad(true)}
-                      fullWidth
-                        >
-                          Choisir une heure
-                        </Button>
-                      </div>
-                </div>
-              )}
 
               {/* Drag & Drop - Nouveau système propre */}
               <DndContext
                 sensors={sensors}
-                collisionDetection={closestCenter}
+                collisionDetection={closestCorners}
                 modifiers={modifiers}
                 onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
@@ -1398,46 +1430,122 @@ export default function EmployeePage() {
                   </div>
                 )}
 
-                {/* Calendrier principal - Deux plages côte à côte */}
-                {!isTouch && employees.length > 0 && selectedEmployee && (
+                {/* Calendrier principal - Responsive */}
+                {employees.length > 0 && selectedEmployee && (
                   <div className="booking-full-width mb-6">
                     <Card>
                       <div style={{ padding: '16px' }}>
+                        {/* Contrôles de zoom */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                          <h3 style={{ 
+                            margin: 0, 
+                            fontSize: '18px', 
+                            fontWeight: 'bold',
+                            color: isDarkMode ? '#f9fafb' : '#111827'
+                          }}>
+                            Calendrier - {selectedDate}
+                          </h3>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span style={{ 
+                              fontSize: '14px', 
+                              color: isDarkMode ? '#9ca3af' : '#6b7280' 
+                            }}>
+                              Vue: {zoomLevel === '30min' ? '30 min' : '15 min'}
+                            </span>
+                            <Button
+                              size="slim"
+                              onClick={handleZoomChange}
+                              variant={zoomLevel === '15min' ? 'primary' : 'secondary'}
+                            >
+                              {zoomLevel === '30min' ? 'Zoom 15min' : 'Zoom 30min'}
+                            </Button>
+                          </div>
+                        </div>
+                        
                         {pxPerMinute > 0 && (
-                          <div style={{ display: 'flex', gap: '16px' }}>
-                            {/* Plage matin 10h-14h */}
-                            <div style={{ flex: 1 }}>
-                              <h3 style={{ textAlign: 'center', marginBottom: '16px', fontSize: '16px', fontWeight: 'bold' }}>
-                                Matin (10h-14h)
-                              </h3>
-                    <DayCalendarView
-                                employees={selectedEmployee ? employees.filter(e => e.id === selectedEmployee) : []}
-                                selectedDate={selectedDate}
-                                onTimeSlotDrop={handleTimeSlotDrop}
-                                currentDraft={currentDraft}
-                                opening={morningOpening}
-                                pxPerMinute={pxPerMinute}
-                                headerHeight={headerHeight}
-                                busyEvents={busyEvents}
-                              />
-                            </div>
-                            
-                            {/* Plage après-midi 14h-19h */}
-                            <div style={{ flex: 1 }}>
-                              <h3 style={{ textAlign: 'center', marginBottom: '16px', fontSize: '16px', fontWeight: 'bold' }}>
-                                Après-midi (14h-19h)
-                              </h3>
-                              <DayCalendarView
-                                employees={selectedEmployee ? employees.filter(e => e.id === selectedEmployee) : []}
-                                selectedDate={selectedDate}
-                                onTimeSlotDrop={handleTimeSlotDrop}
-                                currentDraft={currentDraft}
-                                opening={afternoonOpening}
-                                pxPerMinute={pxPerMinute}
-                                headerHeight={headerHeight}
-                                busyEvents={busyEvents}
-                              />
-                            </div>
+                          <div className={`calendar-container ${isTouch ? 'mobile' : 'desktop'}`}>
+                            {/* Vue mobile - Une plage à la fois */}
+                            {isTouch ? (
+                              <div className="mobile-calendar">
+                                <div className="time-range-selector">
+                                  <Button
+                                    size="slim"
+                                    variant={selectedTimeRange === 'morning' ? 'primary' : 'secondary'}
+                                    onClick={() => setSelectedTimeRange('morning')}
+                                  >
+                                    Matin (10h-14h)
+                                  </Button>
+                                  <Button
+                                    size="slim"
+                                    variant={selectedTimeRange === 'afternoon' ? 'primary' : 'secondary'}
+                                    onClick={() => setSelectedTimeRange('afternoon')}
+                                  >
+                                    Après-midi (14h-19h)
+                                  </Button>
+                                </div>
+                                
+                                <div className="mobile-calendar-view">
+                                  <DayCalendarView
+                                    employees={selectedEmployee ? employees.filter(e => e.id === selectedEmployee) : []}
+                                    selectedDate={selectedDate}
+                                    onTimeSlotDrop={handleTimeSlotDrop}
+                                    currentDraft={currentDraft}
+                                    opening={selectedTimeRange === 'morning' ? morningOpening : afternoonOpening}
+                                    pxPerMinute={pxPerMinute}
+                                    headerHeight={headerHeight}
+                                    busyEvents={busyEvents}
+                                    zoomLevel={zoomLevel}
+                                    isDarkMode={isDarkMode}
+                                    isMobile={true}
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              /* Vue desktop - Deux plages côte à côte */
+                              <div className="desktop-calendar">
+                                <div className="calendar-grid">
+                                  {/* Plage matin 10h-14h */}
+                                  <div className="calendar-section">
+                                    <h3 className="section-title">
+                                      Matin (10h-14h)
+                                    </h3>
+                                    <DayCalendarView
+                                      employees={selectedEmployee ? employees.filter(e => e.id === selectedEmployee) : []}
+                                      selectedDate={selectedDate}
+                                      onTimeSlotDrop={handleTimeSlotDrop}
+                                      currentDraft={currentDraft}
+                                      opening={morningOpening}
+                                      pxPerMinute={pxPerMinute}
+                                      headerHeight={headerHeight}
+                                      busyEvents={busyEvents}
+                                      zoomLevel={zoomLevel}
+                                      isDarkMode={isDarkMode}
+                                      isMobile={false}
+                                    />
+                                  </div>
+                                  
+                                  {/* Plage après-midi 14h-19h */}
+                                  <div className="calendar-section">
+                                    <h3 className="section-title">
+                                      Après-midi (14h-19h)
+                                    </h3>
+                                    <DayCalendarView
+                                      employees={selectedEmployee ? employees.filter(e => e.id === selectedEmployee) : []}
+                                      selectedDate={selectedDate}
+                                      onTimeSlotDrop={handleTimeSlotDrop}
+                                      currentDraft={currentDraft}
+                                      opening={afternoonOpening}
+                                      pxPerMinute={pxPerMinute}
+                                      headerHeight={headerHeight}
+                                      busyEvents={busyEvents}
+                                      zoomLevel={zoomLevel}
+                                      isDarkMode={isDarkMode}
+                                      isMobile={false}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1544,20 +1652,17 @@ export default function EmployeePage() {
           />
         )}
 
-        {/* PinPad pour mobile */}
-        {validatedBlock && (
-          <PinPadScheduler
-            isOpen={showPinPad}
-            onClose={() => setShowPinPad(false)}
-            onConfirm={handlePinPadConfirm}
-            validatedBlock={validatedBlock}
-            date={selectedDate}
-            busySegments={[]}
-          />
-        )}
 
 
       </Page>
     </Frame>
+  )
+}
+
+export default function EmployeePage() {
+  return (
+    <AuthProvider>
+      <EmployeePageContent />
+    </AuthProvider>
   )
 }

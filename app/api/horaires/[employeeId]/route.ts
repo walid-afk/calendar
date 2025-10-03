@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { kv } from '@vercel/kv'
+import { redis } from '@/lib/redis'
 
 interface DaySchedule {
   open: string
@@ -52,15 +52,16 @@ export async function GET(
       return NextResponse.json({ error: 'Employee ID required' }, { status: 400 })
     }
 
-    // Try to get schedule from KV
+    // Try to get schedule from Redis
     const key = `schedule:${employeeId}`
-    const schedule = await kv.get<WeekSchedule>(key)
+    const scheduleData = await redis.get(key)
 
-    if (!schedule) {
+    if (!scheduleData) {
       // Return default schedule if none exists
       return NextResponse.json(DEFAULT_SCHEDULE)
     }
 
+    const schedule = JSON.parse(scheduleData)
     return NextResponse.json(schedule)
   } catch (error) {
     console.error('Error fetching schedule:', error)
@@ -121,9 +122,9 @@ export async function PUT(
       }
     }
 
-    // Save to KV
+    // Save to Redis
     const key = `schedule:${employeeId}`
-    await kv.set(key, body)
+    await redis.set(key, JSON.stringify(body))
 
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -147,9 +148,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Employee ID required' }, { status: 400 })
     }
 
-    // Delete from KV
+    // Delete from Redis
     const key = `schedule:${employeeId}`
-    await kv.del(key)
+    await redis.del(key)
 
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -22,6 +22,7 @@ interface ProductVariant {
 interface ServiceSelectorProps {
   onVariantSelect: (variant: ProductVariant) => void
   selectedVariant?: ProductVariant | null
+  isDarkMode?: boolean
 }
 
 // Mapping des IDs de collection vers les titres
@@ -33,7 +34,7 @@ const CATEGORY_TITLES: Record<string, string> = {
   '666822213976': 'Maquillage & Teinture'
 }
 
-export default function ServiceSelector({ onVariantSelect, selectedVariant }: ServiceSelectorProps) {
+export default function ServiceSelector({ onVariantSelect, selectedVariant, isDarkMode = false }: ServiceSelectorProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('')
   const [selectedProduct, setSelectedProduct] = useState<string>('')
@@ -194,12 +195,13 @@ export default function ServiceSelector({ onVariantSelect, selectedVariant }: Se
       {selectedVariant && (
         <div style={{ 
           padding: '12px', 
-          backgroundColor: '#f6f6f7', 
+          backgroundColor: isDarkMode ? '#374151' : '#f6f6f7', 
           borderRadius: '8px',
-          marginTop: '16px'
+          marginTop: '16px',
+          border: isDarkMode ? '1px solid #4b5563' : 'none'
         }}>
-          <Text as="p" variant="bodyMd">
-            <strong>Prestation sélectionnée :</strong> {selectedVariant.productTitle} - {selectedVariant.title}
+          <Text as="p" variant="bodyMd">  
+            <strong>Prestation sélectionnée :</strong> {selectedVariant.productTitle} - {selectedVariant.title}                                                             
           </Text>
           <Text as="p" variant="bodySm">
             Durée : {selectedVariant.duration} min • Prix : {selectedVariant.price.toFixed(2)}€

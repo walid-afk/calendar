@@ -9,9 +9,10 @@ type Props = {
   employees: Employee[];
   value: string; // 'any' | id
   onChange: (v: string) => void;
+  isDarkMode?: boolean;
 };
 
-export default function StaffPicker({ employees, value, onChange }: Props) {
+export default function StaffPicker({ employees, value, onChange, isDarkMode = false }: Props) {
   return (
     <Card>
       <div className={styles.wrap}>
@@ -22,7 +23,7 @@ export default function StaffPicker({ employees, value, onChange }: Props) {
             role="radio"
             aria-checked={value === e.id}
             tabIndex={0}
-            className={`${styles.card} ${value === e.id ? styles.selected : ''}`}
+            className={`${styles.card} ${value === e.id ? styles.selected : ''} ${isDarkMode ? styles.darkMode : ''}`}
             onClick={() => onChange(e.id)}
             onKeyDown={(ev) => ev.key === 'Enter' && onChange(e.id)}
           >

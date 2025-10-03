@@ -14,9 +14,10 @@ interface ToolbarProps {
   onPrevDay?: () => void
   onNextDay?: () => void
   onReload?: () => void
+  isDarkMode?: boolean
 }
 
-export function Toolbar({ selectedDate, onDateChange, onPrevDay, onNextDay, onReload }: ToolbarProps) {
+export function Toolbar({ selectedDate, onDateChange, onPrevDay, onNextDay, onReload, isDarkMode = false }: ToolbarProps) {
   const router = useRouter()
   const [showCalendarModal, setShowCalendarModal] = useState(false)
 
@@ -87,7 +88,8 @@ export function Toolbar({ selectedDate, onDateChange, onPrevDay, onNextDay, onRe
         justifyContent: 'space-between', 
         alignItems: 'center',
         padding: '16px',
-        borderBottom: '1px solid #e1e3e5'
+        borderBottom: isDarkMode ? '1px solid #374151' : '1px solid #e1e3e5',
+        backgroundColor: isDarkMode ? '#1f2937' : 'transparent'
       }}>
         {/* Left: Calendar button */}
         <div>

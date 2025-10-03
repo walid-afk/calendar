@@ -17,6 +17,18 @@
   transition: all 0.2s ease;
 }
 
+@media (max-width: 768px) {
+  .card {
+    min-width: 100%;
+    padding: 16px;
+  }
+  
+  .wrap {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
 .card:hover {
   background: #f9fafb;
   border-color: #d1d5db;
@@ -74,4 +86,39 @@
   color: #374151;
   font-size: 14px;
   user-select: none;
+}
+
+/* Dark mode styles */
+.darkMode {
+  background: #1f2937 !important;
+  border-color: #4b5563 !important;
+  color: #f9fafb !important;
+}
+
+.darkMode:hover {
+  background: #374151 !important;
+  border-color: #6b7280 !important;
+}
+
+.darkMode.selected {
+  background: #1e40af !important;
+  border-color: #3b82f6 !important;
+  color: #f9fafb !important;
+}
+
+.darkMode .initials {
+  background: #4b5563;
+  color: #f9fafb;
+}
+
+.darkMode .name {
+  color: #f9fafb;
+}
+
+.darkMode .pronoun {
+  color: #9ca3af;
+}
+
+.darkMode .radio {
+  color: #f9fafb;
 }

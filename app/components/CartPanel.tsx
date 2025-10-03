@@ -13,9 +13,10 @@ interface CartPanelProps {
   items: CartItem[]
   onRemoveItem: (itemId: number) => void
   onClearCart: () => void
+  isDarkMode?: boolean
 }
 
-export function CartPanel({ items, onRemoveItem, onClearCart }: CartPanelProps) {
+export function CartPanel({ items, onRemoveItem, onClearCart, isDarkMode = false }: CartPanelProps) {
   const totalMinutes = items.reduce((sum, item) => sum + item.durationMinutes, 0)
   const totalPrice = items.reduce((sum, item) => sum + parseFloat(item.price), 0)
 
@@ -46,8 +47,8 @@ export function CartPanel({ items, onRemoveItem, onClearCart }: CartPanelProps) 
         
         <div style={{ marginTop: '16px' }}>
           <List>
-            {Array.isArray(items) && items.map(item => (
-              <List.Item key={item.id}>
+            {Array.isArray(items) && items.map((item, index) => (
+              <List.Item key={`${item.id}-${index}`}>
                 <div style={{ 
                   display: 'flex', 
                   justifyContent: 'space-between', 

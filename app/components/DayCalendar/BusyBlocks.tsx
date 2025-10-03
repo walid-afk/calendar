@@ -14,6 +14,7 @@ interface BusyBlocksProps {
   opening: string
   pxPerMinute: number
   employeeId: string
+  isDarkMode?: boolean
 }
 
 export function BusyBlocks({ 
@@ -21,9 +22,10 @@ export function BusyBlocks({
   selectedDate, 
   opening, 
   pxPerMinute, 
-  employeeId 
+  employeeId,
+  isDarkMode = false
 }: BusyBlocksProps) {
-  const { open } = getOpeningMinutes(opening)
+  const { open, close } = getOpeningMinutes(opening)
 
   return (
     <>
@@ -43,29 +45,38 @@ export function BusyBlocks({
         const startMinutes = startTime.hour() * 60 + startTime.minute()
         const endMinutes = endTime.hour() * 60 + endTime.minute()
         
-        const top = (startMinutes - open) * pxPerMinute
-        const height = (endMinutes - startMinutes) * pxPerMinute
+        // Clamp les heures de début et fin aux heures d'ouverture
+        const clampedStartMinutes = Math.max(startMinutes, open)
+        const clampedEndMinutes = Math.min(endMinutes, close)
+        
+        // Vérifier si l'événement est visible dans la plage d'ouverture
+        if (clampedStartMinutes >= close || clampedEndMinutes <= open) {
+          return null // Ne pas afficher l'événement s'il est en dehors des heures d'ouverture
+        }
+        
+        const top = (clampedStartMinutes - open) * pxPerMinute
+        const height = (clampedEndMinutes - clampedStartMinutes) * pxPerMinute
 
         return (
           <div
             key={`${employeeId}-${index}`}
-            style={{
-              position: 'absolute',
-              top: top,
-              left: '0',
-              right: '0',
-              height: height,
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fecaca',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              color: '#dc2626',
-              fontWeight: '500',
-              zIndex: 5
-            }}
+                style={{
+                  position: 'absolute',
+                  top: top,
+                  left: '0',
+                  right: '0',
+                  height: height,
+                  backgroundColor: isDarkMode ? '#7f1d1d' : '#fef2f2',
+                  border: isDarkMode ? '1px solid #991b1b' : '1px solid #fecaca',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  color: isDarkMode ? '#fecaca' : '#dc2626',
+                  fontWeight: '500',
+                  zIndex: 5
+                }}
           >
             {event.title || 'Occupé'}
           </div>

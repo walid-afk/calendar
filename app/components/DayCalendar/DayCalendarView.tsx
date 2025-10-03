@@ -37,11 +37,14 @@ interface DayCalendarViewProps {
   employees: Employee[]
   selectedDate: string
   opening?: string // Prop pour les heures d'ouverture personnalisées
-  onTimeSlotDrop: (employeeId: string, dateISO: string, minuteOffset: number) => void // New prop
+  onTimeSlotDrop: (employeeId: string, dateISO: string, hour: number, minute: number) => void // New prop
   currentDraft: { title: string; durationMin: number; price: number } | null // New prop
   pxPerMinute: number // New prop
   headerHeight: number // New prop
   busyEvents: Record<string, Array<{ start: string; end: string }>> // New prop
+  zoomLevel?: '30min' | '15min' // New prop
+  isDarkMode?: boolean
+  isMobile?: boolean // New prop for mobile optimization
 }
 
 export function DayCalendarView({
@@ -52,7 +55,10 @@ export function DayCalendarView({
   currentDraft,
   pxPerMinute,
   headerHeight,
-  busyEvents
+  busyEvents,
+  zoomLevel = '30min',
+  isDarkMode = false,
+  isMobile = false
 }: DayCalendarViewProps) {
   // State
   const [loading, setLoading] = useState(false)
@@ -61,11 +67,12 @@ export function DayCalendarView({
   const calendarOpening = opening
   const { open, close } = getOpeningMinutes(calendarOpening)
   const totalMinutes = close - open
-  const containerHeight = Math.min(600, Math.max(400, totalMinutes * 2)) // 2px per minute, max 600px
+  // Utiliser la hauteur calculée depuis le parent
+  const calculatedHeight = totalMinutes * pxPerMinute
 
   // Time slot click handler
-  const onTimeSlotSelect = (employeeId: string, dateISO: string, minuteOffset: number) => {
-    onTimeSlotDrop(employeeId, dateISO, minuteOffset)
+  const onTimeSlotSelect = (employeeId: string, dateISO: string, hour: number, minute: number) => {
+    onTimeSlotDrop(employeeId, dateISO, hour, minute)
   }
 
 
@@ -73,13 +80,16 @@ export function DayCalendarView({
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1, overflow: 'auto' }}>
         {pxPerMinute > 0 && (
-          <div style={{ display: 'flex', height: containerHeight + headerHeight }}>
-            {/* Time axis */}
-            <TimeAxis 
-              pxPerMinute={pxPerMinute}
-              opening={calendarOpening}
-              containerHeight={containerHeight}
-            />
+          <div style={{ display: 'flex', height: calculatedHeight + headerHeight }}>
+                {/* Time axis */}
+                <TimeAxis 
+                  pxPerMinute={pxPerMinute}
+                  opening={calendarOpening}
+                  containerHeight={calculatedHeight}
+                  zoomLevel={zoomLevel}
+                  isDarkMode={isDarkMode}
+                  isMobile={isMobile}
+                />
 
             {/* Staff columns */}
             <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
@@ -92,6 +102,9 @@ export function DayCalendarView({
                     pxPerMinute={pxPerMinute}
                     busyEvents={busyEvents[employee.id] || []}
                     onTimeSlotSelect={onTimeSlotSelect}
+                    zoomLevel={zoomLevel}
+                    isDarkMode={isDarkMode}
+                    isMobile={isMobile}
                   />
                   <BusyBlocks
                     busyEvents={busyEvents[employee.id] || []}
@@ -99,6 +112,7 @@ export function DayCalendarView({
                     opening={calendarOpening}
                     pxPerMinute={pxPerMinute}
                     employeeId={employee.id}
+                    isDarkMode={isDarkMode}
                   />
                 </div>
               ))}

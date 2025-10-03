@@ -298,11 +298,6 @@ export default function DayCalendarView({
           {/* En-tête de la grille */}
           <div className="absolute top-0 left-0 right-0 h-10 bg-gray-100 border-b border-gray-200 flex items-center px-4">
                 <div className="w-20 text-sm font-medium text-gray-600">Heure</div>
-                {employees.map(employee => (
-                  <div key={employee.id} className="flex-1 text-sm font-medium text-gray-600 text-center">
-                    {employee.label}
-                  </div>
-                ))}
           </div>
 
           {/* Lignes de créneaux horaires */}
